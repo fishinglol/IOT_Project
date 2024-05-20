@@ -1,0 +1,122 @@
+
+#include<Arduino.h>
+
+
+
+
+// HcSR04 packets
+
+  //include CyclicArray
+  template<typename T>
+  class CyclicArray{
+  public:
+    int length;
+    T* value;
+    int position;
+    const int margin = 2;
+
+    CyclicArray(int _length){
+      this->length = _length;
+      this->position = 0;
+      this->value = new T[length]{};
+    }
+
+    ~CyclicArray(){
+      delete[]this->value;
+      this->value = NULL;
+    }
+
+    T get(int index){
+      return value[ ( length + position - index ) % length];
+    }
+
+    void add(T newData){
+      position = (position + 1)% length;
+      value[position] = newData;
+    }
+
+    bool allsame(){
+      for(int i = 1; i< length; i++){
+        if( value[i] - margin > value[0] || value[0] > value[i] + margin ) return 0;
+      }
+      return 1;
+    }
+  };
+
+  //actual HcSr04
+  #define HcSR04_trig 33
+  #define HcSR04_echo 25
+  hw_timer_t *HcSR04_timer;
+  
+  volatile unsigned long HcSR04_distance = 0;
+  CyclicArray<unsigned long> HcSR04_buffer = CyclicArray<unsigned long>(5);
+  bool HcSR04_stable = 1;
+  /*  */bool ready = 0;
+
+  void HcSR04_scan(){
+    digitalWrite(HcSR04_trig, LOW);
+    delayMicroseconds(2);
+    digitalWrite(HcSR04_trig, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(HcSR04_trig, LOW);
+    HcSR04_distance = pulseIn(HcSR04_echo,HIGH) *17 /1000;
+
+    HcSR04_buffer.add(HcSR04_distance);
+    if(HcSR04_buffer.allsame()) {
+      HcSR04_stable = 1;
+
+    }
+    else{
+      if(HcSR04_stable){
+        HcSR04_stable = 0;
+        ready = 1;
+      }
+      
+    }
+    
+    timerWrite(HcSR04_timer, 9990000);
+
+  }
+
+  void HcSR04_init(uint8_t _timerID){
+    pinMode(HcSR04_trig, OUTPUT);
+    digitalWrite(HcSR04_trig, LOW);
+    pinMode(HcSR04_echo, INPUT);
+    
+    HcSR04_timer = timerBegin(_timerID, 80, true );
+    timerAttachInterrupt(HcSR04_timer, HcSR04_scan, false);
+    timerAlarmWrite(HcSR04_timer, 10000000, true); 
+    timerAlarmEnable(HcSR04_timer);
+    timerWrite(HcSR04_timer, 9976468);
+  
+  }
+
+  
+//
+
+
+void setup() {
+  //serial
+  Serial.begin(115200);
+  HcSR04_init(0);
+
+  
+  
+}
+  
+int num = 0;
+void loop() {
+  
+  
+  if(ready){
+    num = (num + 1)%10;
+    Serial.print(num); 
+    Serial.print(" -> "); 
+    Serial.println("detected"); 
+    ready = 0;
+  }
+    
+  
+
+
+}

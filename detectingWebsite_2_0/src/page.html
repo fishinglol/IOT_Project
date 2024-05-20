@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        .btn {
+            background-color: #444444;
+            background-color:#adff2f;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body onload="GET_DATA()">
+    <h1>the LED Switch</h1>
+    <!---<button type="button" class = "btn" id = "btn0" onclick="ButtonPress0()">Toggle</button>--->
+    <button class = "btn" id="LEDButton" onclick="BUTTON_LED_PRESSED()"> on </button>
+    <table>
+        <tbody  id = "LOG">
+            <tr>
+                <th>LOG</th>
+            </tr>
+        </tbody>
+    </table>
+</body>
+<script type="text/javascript">
+    /*var ESPData = new XMLHttpRequest();
+     function GET_DATA(){
+        ESPData.onreadystatechange = UPDATE;
+        ESPData.open("PUT","REQ_XMLData",  true);
+        ESPData.send();
+
+
+        setTimeout(GET_DATA(), 300);
+    }
+    function UPDATE(){
+        if(ESPData.status ==200 && ESPData.readyState == 4){
+            
+        }
+    } */
+    function BUTTON_LED_PRESSED(){
+        var req = new XMLHttpRequest();
+
+        req.onreadystatechange = function(){
+            if(this.readyState == 4 && this.status == 200){
+                var answer = req.responseText;
+                if(answer == "on"){
+                  //button become gray and off
+                      var btn = document.getElementById("LEDButton");
+                      btn.innerHTML = " off "; 
+                      btn.style.backgroundColor = "#444444"; 
+                  //add to log
+                      var tableBody = document.getElementById("LOG");
+                      var ndata = document.createElement("tr");
+                      var time = new Date();
+                      ndata.innerHTML = "<td> " + time.toLocaleDateString() + ", entered at: " +  time.toLocaleTimeString() + " </td>";
+                      tableBody.insertBefore(ndata, tableBody.childNodes[2]);
+                      var nline = tableBody.childNodes[3].cloneNode();
+                      tableBody.insertBefore(nline, tableBody.childNodes[2]);
+                  //
+                        
+                } else if(answer == "off"){
+                  //button become green and on
+                    var btn = document.getElementById("LEDButton");
+                    btn.innerHTML = " on "; 
+                    btn.style.backgroundColor = "#adff2f"; 
+                    
+                  //add to log
+                    var tableBody = document.getElementById("LOG");
+                    var ndata = document.createElement("tr");
+                    var time = new Date();
+                    ndata.innerHTML = "<td> " + time.toLocaleDateString() + ", exit at: " +  time.toLocaleTimeString() + " </td>";
+                    tableBody.insertBefore(ndata, tableBody.childNodes[2]);
+                    var nline = tableBody.childNodes[3].cloneNode();
+                    tableBody.insertBefore(nline, tableBody.childNodes[2]);
+                   
+
+                  //
+        
+                } 
+
+            }
+            
+        }
+
+        req.open("PUT","REQ_LEDbuttonPressed",  true);
+        req.send();
+        
+
+    }
+    
+
+
+</script>
+
+</html>
